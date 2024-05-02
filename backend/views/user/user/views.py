@@ -18,13 +18,12 @@ from rest_framework.permissions import IsAuthenticated
 @permission_classes([IsAuthenticated])
 def getinfo(request):
     user = request.user
-    if not user:
-        return Response({
-            'message': '身份验证失败!'
-        })
+    member = Member.objects.get(user=user)
     return Response({
         'message': '身份验证成功!',
         'username': user.username,
+        'avatar': member.avatar,
+        'description': member.description,
     })
 
 
