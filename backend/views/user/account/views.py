@@ -18,13 +18,12 @@ from rest_framework.permissions import IsAuthenticated
 @permission_classes([IsAuthenticated])
 def getinfo(request):
     user = request.user
-    if not user:
-        return Response({
-            'message': '身份验证失败!'
-        })
+    member = Member.objects.get(user=user)
     return Response({
         'message': '身份验证成功!',
         'username': user.username,
+        'avatar': member.avatar,
+        'description': member.description,
     })
 
 
@@ -33,13 +32,15 @@ def login(request):
     user = get_object_or_404(User, username=request.data.get('username'))
     if not user.check_password(request.data.get('password')):
         return Response({
+            "state": "failed",
             "message": "该用户未注册!"
         })
     token, _ = Token.objects.get_or_create(user=user)
 
     return Response({
+        "state": "success",
         "message": "调用 rest api 成功",
-        "litoken": str(token),
+        "jwt_token": str(token),
     })
 
 
