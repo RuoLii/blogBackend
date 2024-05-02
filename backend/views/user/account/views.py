@@ -1,9 +1,12 @@
+import os
+import uuid
+
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt  # 该装饰器使此次请求忽略 csrf 校验
 from django.contrib.auth.models import User
 from django.contrib.auth import login
 from backend.models.user.account.models import Member
-
+from backend.utils.oss.AliOss import Oss
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
@@ -76,3 +79,47 @@ def register(request):
         "state": 200,
         "message": "register successfully!"
     })
+
+
+@api_view(['POST', 'GET'])
+@authentication_classes([SessionAuthentication, TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def updateAvatar(request):
+    # if request.method == 'POST':
+    #     avatar = request.FILES.get('avatar')
+    #     print(request.FILES)
+    #     return JsonResponse({
+    #         'state': 'success',
+    #         'avatar_url': 'url'
+    #     })
+    # else:
+    #     return JsonResponse({
+    #         'state': 'failed',
+    #         'avatar_url': 'error'
+    #     })
+    user = request.user
+    member = Member.objects.get(user=user)
+    avatar = request.FILES.get('avatar')
+    if avatar is None:
+        return Response({
+            'state': 'failed',
+            'message': '头像上传失败'
+        })
+    else:
+        random_num = uuid.uuid4()
+        filename = str(random_num) + str(avatar)
+        oss = Oss(filename=filename)
+        storge_avatar_url = oss.update_to_oss(avatar.read())
+
+        if not storge_avatar_url:
+            return Response({
+                'state': 'failed',
+                'message': '头像上传失败'
+            })
+        member.avatar = storge_avatar_url
+        member.save()
+        return Response({
+            'state': 'success',
+            'message': '头像上传成功',
+            'avatar_url': storge_avatar_url,
+        })
