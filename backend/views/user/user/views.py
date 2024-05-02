@@ -8,6 +8,24 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from django.shortcuts import get_object_or_404
+from rest_framework.decorators import authentication_classes, permission_classes
+from rest_framework.authentication import SessionAuthentication, TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
+
+
+@api_view(['POST', 'GET'])
+@authentication_classes([SessionAuthentication, TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def getinfo(request):
+    user = request.user
+    if not user:
+        return Response({
+            'message': '身份验证失败!'
+        })
+    return Response({
+        'message': '身份验证成功!',
+        'username': user.username,
+    })
 
 
 @api_view(['POST', 'GET'])
